@@ -1,0 +1,99 @@
+\section{Expand virtual machine storage}
+
+In shell, run
+\begin{console}
+df
+\end{console}
+For F31, you'll see something like this:
+\begin{console}
+Filesystem              1K-blocks      Used Available Use% Mounted on
+devtmpfs                  1976800         0   1976800   0% /dev
+tmpfs                     1997076         0   1997076   0% /dev/shm
+tmpfs                     1997076      1652   1995424   1% /run
+/dev/mapper/fedora-root  73390080  46464148  26925932  64% /
+tmpfs                     1997076        64   1997012   1% /tmp
+/dev/sda1                 1038336    241528    796808  24% /boot
+tmpfs                      399412        76    399336   1% /run/user/1000
+vmhgfs-fuse             245791740 236583704   9208036  97% /home/student/shares
+\end{console}
+For F40, you'll see something like
+\begin{console}
+Filesystem     1K-blocks    Used Available Use% Mounted on
+/dev/nvme0n1p3  19919872 6000576  13583728  31% /
+devtmpfs            4096       0      4096   0% /dev
+tmpfs             978916       0    978916   0% /dev/shm
+tmpfs             391568    1400    390168   1% /run
+tmpfs             978920      44    978876   1% /tmp
+/dev/nvme0n1p2    996780  288304    639664  32% /boot
+/dev/nvme0n1p3  19919872 6000576  13583728  31% /home
+tmpfs             195780     144    195636   1% /run/user/1000
+\end{console}
+For F31, user files are probably stored in \verb!/dev/mapper/fedora-root!
+which should be in the \verb!/dev/sda2/! partition.
+For f40, user files are probably stored in \verb!/dev/nvme0n1p3!.
+Run \verb!su! to become root and then run \verb!gparted! and you'll see the
+following partitions of your HD:
+\begin{center}
+\includegraphics[width=4in]{gp0.png}
+\end{center}
+Note the biggest partition is about 19GB and take note the name.
+
+To expand your HD, do the following:
+
+\begin{enumerate}
+\li Shutdown your virtual machine.
+\li Run VMware workstation. 
+\li Click on Hard Disk. (For F31 next to the Hard Disk is SCSI.
+For F40 you see NVMe.)
+You'll see \lq\lq Capacity: Maximum size 20GB".
+\li (You might want to click on Compact.)
+\li Click on \lq\lq Expand" and then choose Maximum disk size (say 100.0)
+\li Run your virtual machine.
+\end{enumerate}
+
+In your bash shell, run \verb!su! to be root.
+Run \verb!gparted!:
+\begin{center}
+\includegraphics[width=4in]{gp1.png}
+\end{center}
+Right click on \verb!/dev/nvme0n1p3! (the largest partition)
+and select Resize/Move:
+\begin{center}
+\includegraphics[width=4in]{gp2.png}
+\end{center}
+Make this partition as large as possible:
+\begin{center}
+\includegraphics[width=4in]{gp3.png}
+\end{center}
+Click on the green arrow and Apply All Operations.
+
+Run \verb!gparted! again and you'll see:
+\begin{center}
+\includegraphics[width=4in]{gp4.png}
+\end{center}
+Note the size of the largest partition is now largest.
+And \verb!df! gives
+\begin{console}
+Filesystem     1K-blocks    Used Available Use% Mounted on
+/dev/nvme0n1p3 103805952 5637244  97872372   6% /
+devtmpfs            4096       0      4096   0% /dev
+tmpfs             976956       0    976956   0% /dev/shm
+tmpfs             390784    1392    389392   1% /run
+tmpfs             976960      36    976924   1% /tmp
+/dev/nvme0n1p2    996780  347368    580600  38% /boot
+/dev/nvme0n1p3 103805952 5637244  97872372   6% /home
+tmpfs             195388     144    195244   1% /run/user/1000
+\end{console}
+
+For F31, you'll also need to do the following.
+In your bash shell, run
+\begin{console}
+lvm lvresize --verbose --resizefs -L 70G /dev/mapper/fedora-root
+\end{console}
+replacing 70G with whatever is appropriate.
+Run
+\begin{console}
+df
+\end{console}
+again and check that 
+\verb!/dev/mapper/fedora-root! is larger.
